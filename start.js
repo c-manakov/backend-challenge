@@ -16,9 +16,13 @@ connect()
     console.log('Successfully connected to a server')
     
     const db = client.db(dbname)
+    const collection = db.collection('patients')
     const readStream = fs.createReadStream('./data.txt')
 
-    load(readStream, db)
+    return load(readStream, collection)
+  })
+  .then(() => {
+    
   })
   .catch(err => console.error(err))
 

@@ -1,27 +1,43 @@
 const parseStream = require('csv-parse')
+const R = require('rambda')
 
-function load(filestream, db) {
-  console.log('loading') 
-  console.dir(filestream)
-}
-
-function parse(filestream) {
+const parse = (filestream) => new Promise((resolve, reject) => {
   let res = []
 
   const parser = parseStream({delimiter: '|'})
 
-  parser.on('readable', function(){
+  filestream.pipe(parser)
+
+  parser.on('readable', () => {
     let record
     while (record = parser.read()) {
-      output.push(record)
+      res.push(record)
     }
   })
   // Catch any error
-  parser.on('error', function(err){
-    console.error(err.message)
+  parser.on('error', (err) => {
+    reject(err)
   })
-}
 
-module.exports = {load}
+  parser.on('end', () => {
+    resolve(res)
+  })
+})
+
+const load = async (filestream, collection) => {
+  console.log('loading') 
+  const res = await parse(filestream)  
+
+  const keys = R.head(res)
+
+  let list = R.map (R.zipObj(keys)) (R.tail(res))
+
+  await collection.insertMany(list)
+
+  console.log(list)
+
+  await collection.deleteMany({})
+}
+module.exports = {load, parse}
 
 
