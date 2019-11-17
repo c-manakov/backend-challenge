@@ -24,8 +24,8 @@ const parse = (filestream) => new Promise((resolve, reject) => {
   })
 })
 
-const load = async (filestream, collection) => {
-  console.log('loading') 
+const load = async (filestream, db) => {
+  const collection = db.collection('patients')
   const res = await parse(filestream)  
 
   const keys = R.head(res)
@@ -34,10 +34,29 @@ const load = async (filestream, collection) => {
 
   await collection.insertMany(list)
 
-  console.log(list)
-
-  await collection.deleteMany({})
+  // await collection.deleteMany({})
 }
-module.exports = {load, parse}
+
+const createEmails = async(db) => {
+  const patientCollection = db.collection('patients')
+  const emailCollection = db.collection('emails')
+
+  const patients = await patientCollection.find({CONSENT: 'Y'}).toArray()
+
+  const names = ['Day 1', 'Day 2', 'Day 3', 'Day 4']
+
+  const emails = R.pipe(
+    R.map(patient => 
+      R.map(name => ({name, patient_id: patient._id}), names)
+    ),
+    R.flatten
+  )(patients)
+  
+
+  await emailCollection.insertMany(emails)
+  
+  console.log(emails)
+}
+module.exports = {load, parse, createEmails}
 
 

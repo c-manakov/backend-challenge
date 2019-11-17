@@ -1,6 +1,6 @@
 const {MongoClient} = require('mongodb')
 const {promisify} = require('util')
-const {load} = require('./load')
+const {load, createEmails} = require('./load')
 const fs = require('fs')
 
 const url = 'mongodb://localhost:27017'
@@ -11,18 +11,19 @@ const client = MongoClient(url)
 
 const connect = promisify(client.connect.bind(client))
 
+let db
+
 connect()
   .then(() => {
     console.log('Successfully connected to a server')
     
-    const db = client.db(dbname)
-    const collection = db.collection('patients')
+    db = client.db(dbname)
     const readStream = fs.createReadStream('./data.txt')
 
-    return load(readStream, collection)
+    return load(readStream, db)
   })
   .then(() => {
-    
+    return createEmails(db)
   })
   .catch(err => console.error(err))
 
