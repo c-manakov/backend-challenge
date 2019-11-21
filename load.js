@@ -1,5 +1,6 @@
 const parseStream = require('csv-parse')
-const R = require('rambda')
+const R = require('ramda')
+const moment = require('moment')
 
 const parse = (filestream) => new Promise((resolve, reject) => {
   let res = []
@@ -32,26 +33,33 @@ const load = async (filestream, db) => {
 
   let list = R.map (R.zipObj(keys)) (R.tail(res))
 
+  await collection.deleteMany({})
+
   await collection.insertMany(list)
 
-  // await collection.deleteMany({})
 }
 
 const createEmails = async(db) => {
   const patientCollection = db.collection('patients')
   const emailCollection = db.collection('emails')
 
-  const patients = await patientCollection.find({CONSENT: 'Y'}).toArray()
+  await emailCollection.deleteMany()
 
-  const names = ['Day 1', 'Day 2', 'Day 3', 'Day 4']
+  const patients = await patientCollection.find({CONSENT: 'Y', 'Email Address': {$ne: ''}}).toArray()
+
+  const body = 'Lorem ipsum dolor'
+
 
   const emails = R.pipe(
-    R.map(patient => 
-      R.map(name => ({name, patient_id: patient._id}), names)
-    ),
-    R.flatten
+    R.xprod(R.range(1, 5)),
+    R.map(([day, patient]) => ({
+        email: patient['Email Address'],
+        body: body, 
+        patient_id: patient._id,
+        date: moment.utc().set({hour: 0, minute: 0, second: 0, millisecond: 0}).add(day, 'days').toDate()
+    }))
   )(patients)
-  
+
 
   await emailCollection.insertMany(emails)
   
