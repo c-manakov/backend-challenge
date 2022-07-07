@@ -16,7 +16,7 @@
     "csv-parse": "^4.8.2",
     "jest": "^24.9.0",
     "jest-html-reporter": "^2.7.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "mongodb": "^3.3.4",
     "ramda": "^0.26.1"
   }
